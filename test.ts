@@ -89,8 +89,10 @@ function highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
     function processKeywords() {
         var keyword_match, last_index, match, result;
 
-        if (!top.keywords)
-            return escape(mode_buffer);
+        if (!top.keywords){
+            // return escape(mode_buffer);
+            return mode_buffer;
+        }
 
         result = '';
         last_index = 0;
@@ -453,4 +455,4 @@ function restoreLanguageApi(obj) {
 
 registerLanguage('xml', './languages/xml.js');
 const someHTML = '<html><div class="test">Test</div></html>';
-console.log(highlight('xml', someHTML));
+console.log(highlight('xml', someHTML).value);
