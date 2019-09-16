@@ -38,35 +38,6 @@ var API_REPLACES;
 
 function highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
 
-    function escapeRe(value) {
-        return new RegExp(value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'm');
-    }
-
-    function subMode(lexeme, mode) {
-        var i, length;
-
-        for (i = 0, length = mode.contains.length; i < length; i++) {
-            if (testRe(mode.contains[i].beginRe, lexeme)) {
-                if (mode.contains[i].endSameAsBegin) {
-                    mode.contains[i].endRe = escapeRe(mode.contains[i].beginRe.exec(lexeme)[0]);
-                }
-                return mode.contains[i];
-            }
-        }
-    }
-
-    function endOfMode(mode, lexeme) {
-        if (testRe(mode.endRe, lexeme)) {
-            while (mode.endsParent && mode.parent) {
-                mode = mode.parent;
-            }
-            return mode;
-        }
-        if (mode.endsWithParent) {
-            return endOfMode(mode.parent, lexeme);
-        }
-    }
-
     function isIllegal(lexeme, mode) {
         return !ignore_illegals && testRe(mode.illegalRe, lexeme);
     }
@@ -74,17 +45,6 @@ function highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
     function keywordMatch(mode, match) {
         var match_str = language.case_insensitive ? match[0].toLowerCase() : match[0];
         return mode.keywords.hasOwnProperty(match_str) && mode.keywords[match_str];
-    }
-
-    function buildSpan(classname, insideSpan, leaveOpen ?: any, noPrefix ?: any) {
-        var classPrefix = noPrefix ? '' : options.classPrefix,
-            openSpan = '<span class="' + classPrefix,
-            closeSpan = leaveOpen ? '' : spanEndTag;
-
-        openSpan += classname + '">';
-
-        if (!classname) return insideSpan;
-        return openSpan + insideSpan + closeSpan;
     }
 
     function processKeywords() {
@@ -308,6 +268,46 @@ function restoreLanguageApi(obj) {
             obj[key] && (obj[API_REPLACES[key]] = obj[key]);
         (obj.contains || []).concat(obj.variants || []).forEach(restoreLanguageApi);
     }
+}
+
+function escapeRe(value) {
+    return new RegExp(value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'm');
+}
+
+function subMode(lexeme, mode) {
+    var i, length;
+
+    for (i = 0, length = mode.contains.length; i < length; i++) {
+        if (testRe(mode.contains[i].beginRe, lexeme)) {
+            if (mode.contains[i].endSameAsBegin) {
+                mode.contains[i].endRe = escapeRe(mode.contains[i].beginRe.exec(lexeme)[0]);
+            }
+            return mode.contains[i];
+        }
+    }
+}
+
+function endOfMode(mode, lexeme) {
+    if (testRe(mode.endRe, lexeme)) {
+        while (mode.endsParent && mode.parent) {
+            mode = mode.parent;
+        }
+        return mode;
+    }
+    if (mode.endsWithParent) {
+        return endOfMode(mode.parent, lexeme);
+    }
+}
+
+function buildSpan(classname, insideSpan, leaveOpen ?: any, noPrefix ?: any) {
+    var classPrefix = noPrefix ? '' : options.classPrefix,
+        openSpan = '<span class="' + classPrefix,
+        closeSpan = leaveOpen ? '' : spanEndTag;
+
+    openSpan += classname + '">';
+
+    if (!classname) return insideSpan;
+    return openSpan + insideSpan + closeSpan;
 }
 
 const languageCompiler = new LanguageCompiler();
