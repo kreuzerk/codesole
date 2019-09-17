@@ -1,5 +1,7 @@
 import {LanguageCompiler} from './language-compiler';
 import {xml} from './languages/xml';
+import {colorDefinitions} from './themes/github';
+import chalk from 'chalk';
 
 export class Codesole {
 
@@ -19,11 +21,11 @@ export class Codesole {
         useBR: false,
         languages: undefined
     };
-    private spanEndTag = '</span>';
     private languages = {};
     private aliases = {};
     private API_REPLACES;
     private ignore_illegals: boolean;
+    private colorFunc;
 
     constructor() {
         this.languageCompiler = new LanguageCompiler();
@@ -80,7 +82,7 @@ export class Codesole {
             this.processLexeme(value.substr(index));
             for (current = this.top; current.parent; current = current.parent) { // close dangling modes
                 if (current.className) {
-                    this.result += this.spanEndTag;
+                    console.log('ClassName', current.className);
                 }
             }
             return {
@@ -111,7 +113,7 @@ export class Codesole {
     }
 
     private processKeywords() {
-        var keyword_match, last_index, match, result;
+        let keyword_match, last_index, match, result;
 
         if (!(this.top as any).keywords) {
             // return escape(mode_buffer);
@@ -164,7 +166,10 @@ export class Codesole {
     }
 
     private processBuffer() {
-        this.result += ((this.top as any).subLanguage != null ? this.processSubLanguage() : this.processKeywords());
+        console.log('Rendering', ((this.top as any).subLanguage != null ? this.processSubLanguage() : this.processKeywords()));
+        if(this.colorFunc) {
+            this.result += this.colorFunc(((this.top as any).subLanguage != null ? this.processSubLanguage() : this.processKeywords()));
+        }
         this.mode_buffer = '';
     }
 
@@ -215,7 +220,8 @@ export class Codesole {
             }
             do {
                 if ((this.top as any).className) {
-                    this.result += this.spanEndTag;
+                    this.colorFunc = chalk.hex(colorDefinitions['tag'].color);
+                    console.log('Closing', (this.top as any).className);
                 }
                 if (!(this.top as any).skip && !(this.top as any).subLanguage) {
                     this.relevance += (this.top as any).relevance;
@@ -263,14 +269,17 @@ export class Codesole {
     }
 
     private buildSpan(classname, insideSpan, leaveOpen ?: any, noPrefix ?: any) {
+
         let classPrefix = noPrefix ? '' : this.options.classPrefix,
-            openSpan = '<span class="' + classPrefix,
-            closeSpan = leaveOpen ? '' : this.spanEndTag;
+            openSpan = '<span class="' + classPrefix;
 
         openSpan += classname + '">';
 
+        this.colorFunc = chalk.hex(colorDefinitions[classname].color);
+
         if (!classname) return insideSpan;
-        return openSpan + insideSpan + closeSpan;
+        // return openSpan + insideSpan + closeSpan;
+        return '';
     }
 
     private testRe(re, lexeme) {

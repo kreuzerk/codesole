@@ -4,8 +4,8 @@ Category: common
 */
 
 export function xml(hljs) {
-    var XML_IDENT_RE = '[A-Za-z0-9\\._:-]+';
-    var TAG_INTERNALS = {
+    let XML_IDENT_RE = '[A-Za-z0-9\\._:-]+';
+    let TAG_INTERNALS = {
         endsWithParent: true,
         illegal: /</,
         relevance: 0,

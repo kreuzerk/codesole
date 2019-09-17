@@ -31,17 +31,17 @@ export class LanguageCompiler {
         //   interesting elements
         // - non-matching or lookahead parentheses, which do not capture. These
         //   follow the '(' with a '?'.
-        var backreferenceRe = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
-        var numCaptures = 0;
-        var ret = '';
-        for (var i = 0; i < regexps.length; i++) {
-            var offset = numCaptures;
-            var re = this.reStr(regexps[i]);
+        const backreferenceRe = /\[(?:[^\\\]]|\\.)*\]|\(\??|\\([1-9][0-9]*)|\\./;
+        let numCaptures = 0;
+        let ret = '';
+        for (let i = 0; i < regexps.length; i++) {
+            const offset = numCaptures;
+            let re = this.reStr(regexps[i]);
             if (i > 0) {
                 ret += separator;
             }
             while (re.length > 0) {
-                var match = backreferenceRe.exec(re);
+                const match = backreferenceRe.exec(re);
                 if (match == null) {
                     ret += re;
                     break;

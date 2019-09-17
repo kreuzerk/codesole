@@ -97,6 +97,7 @@ function highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
     }
 
     function processBuffer() {
+        console.log('Process keywords', top.subLanguage != null ? processSubLanguage() : processKeywords());
         result += (top.subLanguage != null ? processSubLanguage() : processKeywords());
         mode_buffer = '';
     }
@@ -303,6 +304,8 @@ function buildSpan(classname, insideSpan, leaveOpen ?: any, noPrefix ?: any) {
     var classPrefix = noPrefix ? '' : options.classPrefix,
         openSpan = '<span class="' + classPrefix,
         closeSpan = leaveOpen ? '' : spanEndTag;
+
+    console.log('Applying classname', classname);
 
     openSpan += classname + '">';
 
