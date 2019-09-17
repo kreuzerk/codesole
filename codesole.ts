@@ -4,17 +4,15 @@ import {xml} from './languages/xml';
 export class Codesole {
 
     private languageCompiler: LanguageCompiler;
-    public PHRASAL_WORDS_MODE = {
+    private PHRASAL_WORDS_MODE = {
         begin: /\b(a|an|the|are|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|they|like|more)\b/
     };
     private top;
     private mode_buffer = '';
     private relevance = 0;
-    private continuations = {}; // keep continuations for sub-languages
+    private continuations = {};
     private result = '';
-
     private language: any;
-
     private options = {
         classPrefix: 'hljs-',
         tabReplace: null,
@@ -24,7 +22,6 @@ export class Codesole {
     private spanEndTag = '</span>';
     private languages = {};
     private aliases = {};
-
     private API_REPLACES;
     private ignore_illegals: boolean;
 
@@ -34,7 +31,7 @@ export class Codesole {
     }
 
     public COMMENT(begin, end, inherits) {
-        var mode: any = this.inherit(
+        const mode: any = this.inherit(
             {
                 className: 'comment',
                 begin: begin, end: end,
@@ -71,7 +68,7 @@ export class Codesole {
         this.mode_buffer = '';
         this.relevance = 0;
         try {
-            var match, count, index = 0;
+            let match, count, index = 0;
             while (true) {
                 this.top.terminators.lastIndex = index;
                 match = (this.top.terminators.exec as any)(value);
@@ -142,12 +139,12 @@ export class Codesole {
     }
 
     private processSubLanguage() {
-        var explicit = typeof (this.top as any).subLanguage === 'string';
+        const explicit = typeof (this.top as any).subLanguage === 'string';
         if (explicit && !this.languages[(this.top as any).subLanguage]) {
             return escape(this.mode_buffer);
         }
 
-        var result = this.highlight(
+        const result = this.highlight(
             (this.top as any).subLanguage,
             this.mode_buffer,
             true,
@@ -185,7 +182,7 @@ export class Codesole {
             return 0;
         }
 
-        var new_mode = this.subMode(lexeme, this.top);
+        const new_mode = this.subMode(lexeme, this.top);
         if (new_mode) {
             if (new_mode.skip) {
                 this.mode_buffer += lexeme;
@@ -202,9 +199,9 @@ export class Codesole {
             return new_mode.returnBegin ? 0 : lexeme.length;
         }
 
-        var end_mode = this.endOfMode(this.top, lexeme);
+        const end_mode = this.endOfMode(this.top, lexeme);
         if (end_mode) {
-            var origin: any = this.top;
+            const origin: any = this.top;
             if (origin.skip) {
                 this.mode_buffer += lexeme;
             } else {
@@ -247,9 +244,9 @@ export class Codesole {
     }
 
     private inherit(parent, foo ?: any, bar ?: any) {  // inherit(parent, override_obj, override_obj, ...)
-        var key;
-        var result = {};
-        var objects = Array.prototype.slice.call(arguments, 1);
+        let key;
+        const result = {};
+        const objects = Array.prototype.slice.call(arguments, 1);
 
         for (key in parent)
             result[key] = parent[key];
@@ -266,7 +263,7 @@ export class Codesole {
     }
 
     private buildSpan(classname, insideSpan, leaveOpen ?: any, noPrefix ?: any) {
-        var classPrefix = noPrefix ? '' : this.options.classPrefix,
+        let classPrefix = noPrefix ? '' : this.options.classPrefix,
             openSpan = '<span class="' + classPrefix,
             closeSpan = leaveOpen ? '' : this.spanEndTag;
 
@@ -277,7 +274,7 @@ export class Codesole {
     }
 
     private testRe(re, lexeme) {
-        var match = re && re.exec(lexeme);
+        let match = re && re.exec(lexeme);
         return match && match.index === 0;
     }
 
@@ -294,7 +291,7 @@ export class Codesole {
     }
 
     private subMode(lexeme, mode) {
-        var i, length;
+        let i, length;
 
         for (i = 0, length = mode.contains.length; i < length; i++) {
             if (this.testRe(mode.contains[i].beginRe, lexeme)) {
@@ -311,7 +308,7 @@ export class Codesole {
     }
 
     private registerLanguage(name, language: any) {
-        var lang = this.languages[name] = xml(this);
+        let lang = this.languages[name] = xml(this);
         this.restoreLanguageApi(lang);
         if (lang.aliases) {
             lang.aliases.forEach((alias) => {
@@ -323,7 +320,7 @@ export class Codesole {
     private restoreLanguageApi(obj) {
         if (this.API_REPLACES && !obj.langApiRestored) {
             obj.langApiRestored = true;
-            for (var key in this.API_REPLACES)
+            for (let key in this.API_REPLACES)
                 obj[key] && (obj[this.API_REPLACES[key]] = obj[key]);
             (obj.contains || []).concat(obj.variants || []).forEach(this.restoreLanguageApi);
         }

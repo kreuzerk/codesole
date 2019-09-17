@@ -69,14 +69,14 @@ export class LanguageCompiler {
 
         mode.keywords = mode.keywords || mode.beginKeywords;
         if (mode.keywords) {
-            var compiled_keywords = {};
+            const compiled_keywords = {};
 
-            var flatten = (className, str) => {
+            const flatten = (className, str) => {
                 if (this.language.case_insensitive) {
                     str = str.toLowerCase();
                 }
                 str.split(' ').forEach(function (kw) {
-                    var pair = kw.split('|');
+                    const pair = kw.split('|');
                     compiled_keywords[pair[0]] = [className, pair[1] ? Number(pair[1]) : 1];
                 });
             };
@@ -127,7 +127,7 @@ export class LanguageCompiler {
             this.compileMode(mode.starts, parent);
         }
 
-        var terminators =
+        const terminators =
             mode.contains.map(function (c) {
                 return c.beginKeywords ? '\\.?(?:' + c.begin + ')\\.?' : c.begin;
             })
@@ -151,9 +151,9 @@ export class LanguageCompiler {
     }
 
     public inherit(parent, foo ?: any, bar ?: any) {  // inherit(parent, override_obj, override_obj, ...)
-        var key;
-        var result = {};
-        var objects = Array.prototype.slice.call(arguments, 1);
+        let key;
+        const result = {};
+        const objects = Array.prototype.slice.call(arguments, 1);
 
         for (key in parent)
             result[key] = parent[key];
@@ -163,6 +163,4 @@ export class LanguageCompiler {
         });
         return result;
     }
-
-
 }
