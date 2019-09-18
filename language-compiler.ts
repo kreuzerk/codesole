@@ -1,6 +1,9 @@
 export class LanguageCompiler {
 
     private language;
+    private static PHRASAL_WORDS_MODE = {
+        begin: /\b(a|an|the|are|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|they|like|more)\b/
+    };
 
     constructor() {
     }
@@ -144,13 +147,13 @@ export class LanguageCompiler {
     public expand_mode(mode) {
         if (mode.variants && !mode.cached_variants) {
             mode.cached_variants = mode.variants.map((variant) => {
-                return this.inherit(mode, {variants: null}, variant);
+                return LanguageCompiler.inherit(mode, {variants: null}, variant);
             });
         }
-        return mode.cached_variants || (mode.endsWithParent && [this.inherit(mode)]) || [mode];
+        return mode.cached_variants || (mode.endsWithParent && [LanguageCompiler.inherit(mode)]) || [mode];
     }
 
-    public inherit(parent, foo ?: any, bar ?: any) {  // inherit(parent, override_obj, override_obj, ...)
+    public static inherit(parent, foo ?: any, bar ?: any) {  // inherit(parent, override_obj, override_obj, ...)
         let key;
         const result = {};
         const objects = Array.prototype.slice.call(arguments, 1);
@@ -163,4 +166,23 @@ export class LanguageCompiler {
         });
         return result;
     }
+
+    public static COMMENT(begin, end, inherits) {
+        const mode: any = LanguageCompiler.inherit(
+            {
+                className: 'comment',
+                begin: begin, end: end,
+                contains: []
+            },
+            inherits || {}
+        );
+        mode.contains.push(LanguageCompiler.PHRASAL_WORDS_MODE);
+        mode.contains.push({
+            className: 'doctag',
+            begin: '(?:TODO|FIXME|NOTE|BUG|XXX):',
+            relevance: 0
+        });
+        return mode;
+    }
+
 }

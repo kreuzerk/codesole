@@ -6,9 +6,6 @@ import chalk from 'chalk';
 export class Codesole {
 
     private languageCompiler: LanguageCompiler;
-    private PHRASAL_WORDS_MODE = {
-        begin: /\b(a|an|the|are|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|they|like|more)\b/
-    };
     private top;
     private mode_buffer = '';
     private relevance = 0;
@@ -30,24 +27,6 @@ export class Codesole {
     constructor() {
         this.languageCompiler = new LanguageCompiler();
         this.registerLanguage('xml', './languages/xml.js');
-    }
-
-    public COMMENT(begin, end, inherits) {
-        const mode: any = this.inherit(
-            {
-                className: 'comment',
-                begin: begin, end: end,
-                contains: []
-            },
-            inherits || {}
-        );
-        mode.contains.push(this.PHRASAL_WORDS_MODE);
-        mode.contains.push({
-            className: 'doctag',
-            begin: '(?:TODO|FIXME|NOTE|BUG|XXX):',
-            relevance: 0
-        });
-        return mode;
     }
 
     public highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
@@ -108,7 +87,7 @@ export class Codesole {
     }
 
     private keywordMatch(mode, match) {
-        var match_str = this.language.case_insensitive ? match[0].toLowerCase() : match[0];
+        const match_str = this.language.case_insensitive ? match[0].toLowerCase() : match[0];
         return mode.keywords.hasOwnProperty(match_str) && mode.keywords[match_str];
     }
 
@@ -249,20 +228,6 @@ export class Codesole {
         return lexeme.length || 1;
     }
 
-    private inherit(parent, foo ?: any, bar ?: any) {  // inherit(parent, override_obj, override_obj, ...)
-        let key;
-        const result = {};
-        const objects = Array.prototype.slice.call(arguments, 1);
-
-        for (key in parent)
-            result[key] = parent[key];
-        objects.forEach(function (obj) {
-            for (key in obj)
-                result[key] = obj[key];
-        });
-        return result;
-    }
-
     private getLanguage(name) {
         name = (name || '').toLowerCase();
         return this.languages[name] || this.languages[this.aliases[name]];
@@ -272,8 +237,6 @@ export class Codesole {
 
         let classPrefix = noPrefix ? '' : this.options.classPrefix,
             openSpan = '<span class="' + classPrefix;
-
-        openSpan += classname + '">';
 
         this.colorFunc = chalk.hex(colorDefinitions[classname].color);
 
