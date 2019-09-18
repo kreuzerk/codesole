@@ -1,10 +1,9 @@
-import {LanguageCompiler} from './language-compiler';
-import {xml} from './languages/xml';
-import {colorDefinitions} from './themes/github';
 import chalk from 'chalk';
-import {HighlightEngine} from './highlight-engine';
+import {colorDefinitions} from './themes/github';
+import {xml} from './languages/xml';
+import {LanguageCompiler} from './language-compiler';
 
-export class Codesole {
+export class HighlightEngine {
 
     private languageCompiler: LanguageCompiler;
     private top;
@@ -24,17 +23,13 @@ export class Codesole {
     private API_REPLACES;
     private ignore_illegals: boolean;
     private colorFunc;
-    private highlightEngine: HighlightEngine;
 
     constructor() {
         this.languageCompiler = new LanguageCompiler();
-        this.highlightEngine = new HighlightEngine();
+        this.registerLanguage('xml', './languages/xml.js');
     }
 
     public highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
-        return this.highlightEngine.highlight(name, value);
-    }
-        /*
         this.ignore_illegals = ignore_illegals;
         this.language = this.getLanguage(name);
         if (!this.language) {
@@ -228,6 +223,7 @@ export class Codesole {
         Parser should not reach this point as all types of lexemes should be caught
         earlier, but if it does due to some bug make sure it advances at least one
         character forward to prevent infinite looping.
+        */
         this.mode_buffer += lexeme;
         return lexeme.length || 1;
     }
@@ -301,5 +297,4 @@ export class Codesole {
             (obj.contains || []).concat(obj.variants || []).forEach(this.restoreLanguageApi);
         }
     }
-    */
 }
