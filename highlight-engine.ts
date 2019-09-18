@@ -1,6 +1,5 @@
 import chalk from 'chalk';
 import {colorDefinitions} from './themes/github';
-import {xml} from './languages/xml';
 import {LanguageCompiler} from './language-compiler';
 
 export class HighlightEngine {
@@ -18,25 +17,19 @@ export class HighlightEngine {
         useBR: false,
         languages: undefined
     };
-    private languages = {};
+    private readonly languages = {};
     private aliases = {};
     private API_REPLACES;
     private ignore_illegals: boolean;
     private colorFunc;
 
-    constructor() {
+    constructor(languages) {
         this.languageCompiler = new LanguageCompiler();
-        this.registerLanguage('xml', './languages/xml.js');
+        this.languages = languages;
     }
 
-    public highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
-        this.ignore_illegals = ignore_illegals;
-        this.language = this.getLanguage(name);
-        if (!this.language) {
-            throw new Error('Unknown language: "' + name + '"');
-        }
-
-        this.languageCompiler.compileLanguage(this.language);
+    public highlight(name, value, languageDefiniton, ignore_illegals ?: any, continuation ?: any) {
+        this.language = languageDefiniton;
         this.top = continuation || this.language;
         this.continuations = {}; // keep continuations for sub-languages
         this.result = '';
@@ -277,24 +270,5 @@ export class HighlightEngine {
 
     private escapeRe(value) {
         return new RegExp(value.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'm');
-    }
-
-    private registerLanguage(name, language: any) {
-        let lang = this.languages[name] = xml(this);
-        this.restoreLanguageApi(lang);
-        if (lang.aliases) {
-            lang.aliases.forEach((alias) => {
-                this.aliases[alias] = name;
-            });
-        }
-    }
-
-    private restoreLanguageApi(obj) {
-        if (this.API_REPLACES && !obj.langApiRestored) {
-            obj.langApiRestored = true;
-            for (let key in this.API_REPLACES)
-                obj[key] && (obj[this.API_REPLACES[key]] = obj[key]);
-            (obj.contains || []).concat(obj.variants || []).forEach(this.restoreLanguageApi);
-        }
     }
 }
