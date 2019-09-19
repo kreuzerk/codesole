@@ -3,7 +3,10 @@ Language: HTML, XML
 Category: common
 */
 
-export function xml(hljs) {
+import {LanguageCompiler} from '../language-compiler';
+import {APOS_STRING_MODE, QUOTE_STRING_MODE} from '../language-constants';
+
+export function xml() {
     let XML_IDENT_RE = '[A-Za-z0-9\\._:-]+';
     let TAG_INTERNALS = {
         endsWithParent: true,
@@ -42,7 +45,7 @@ export function xml(hljs) {
                 relevance: 10,
                 contains: [{begin: '\\[', end: '\\]'}]
             },
-            hljs.COMMENT(
+            LanguageCompiler.COMMENT(
                 '<!--',
                 '-->',
                 {
@@ -66,8 +69,8 @@ export function xml(hljs) {
                     {begin: '/\\*', end: '\\*/', skip: true},
                     {begin: 'b"', end: '"', skip: true},
                     {begin: 'b\'', end: '\'', skip: true},
-                    hljs.inherit(hljs.APOS_STRING_MODE, {illegal: null, className: null, contains: null, skip: true}),
-                    hljs.inherit(hljs.QUOTE_STRING_MODE, {illegal: null, className: null, contains: null, skip: true})
+                    LanguageCompiler.inherit(APOS_STRING_MODE, {illegal: null, className: null, contains: null, skip: true}),
+                    LanguageCompiler.inherit(QUOTE_STRING_MODE, {illegal: null, className: null, contains: null, skip: true})
                 ]
             },
             {
