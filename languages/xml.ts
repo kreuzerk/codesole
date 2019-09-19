@@ -4,8 +4,9 @@ Category: common
 */
 
 import {LanguageCompiler} from '../language-compiler';
+import {APOS_STRING_MODE, QUOTE_STRING_MODE} from '../language-constants';
 
-export function xml(hljs) {
+export function xml() {
     let XML_IDENT_RE = '[A-Za-z0-9\\._:-]+';
     let TAG_INTERNALS = {
         endsWithParent: true,
@@ -68,8 +69,8 @@ export function xml(hljs) {
                     {begin: '/\\*', end: '\\*/', skip: true},
                     {begin: 'b"', end: '"', skip: true},
                     {begin: 'b\'', end: '\'', skip: true},
-                    LanguageCompiler.inherit(hljs.APOS_STRING_MODE, {illegal: null, className: null, contains: null, skip: true}),
-                    LanguageCompiler.inherit(hljs.QUOTE_STRING_MODE, {illegal: null, className: null, contains: null, skip: true})
+                    LanguageCompiler.inherit(APOS_STRING_MODE, {illegal: null, className: null, contains: null, skip: true}),
+                    LanguageCompiler.inherit(QUOTE_STRING_MODE, {illegal: null, className: null, contains: null, skip: true})
                 ]
             },
             {

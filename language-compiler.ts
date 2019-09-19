@@ -167,7 +167,7 @@ export class LanguageCompiler {
         return result;
     }
 
-    public static COMMENT(begin, end, inherits) {
+    public static COMMENT(begin, end, inherits?: any) {
         const mode: any = LanguageCompiler.inherit(
             {
                 className: 'comment',

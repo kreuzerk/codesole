@@ -314,6 +314,10 @@ function buildSpan(classname, insideSpan, leaveOpen ?: any, noPrefix ?: any) {
 }
 
 const languageCompiler = new LanguageCompiler();
-registerLanguage('xml', './languages/xml.js');
+registerLanguage('xml', './languages/xml.ts');
+registerLanguage('javascript', './languages/javascript.ts');
 const someHTML = '<html><div class="test">Test</div></html>';
 console.log(highlight('xml', someHTML).value);
+
+const someJavascript = 'const i = 4;while(i>0){console.log("this is cool");i--;}';
+console.log(highlight('javascript', someJavascript).value);

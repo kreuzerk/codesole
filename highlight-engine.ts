@@ -20,7 +20,6 @@ export class HighlightEngine {
     private readonly languages = {};
     private aliases = {};
     private API_REPLACES;
-    private ignore_illegals: boolean;
     private colorFunc;
 
     constructor(languages) {
@@ -33,12 +32,13 @@ export class HighlightEngine {
         this.top = continuation || this.language;
         this.continuations = {}; // keep continuations for sub-languages
         this.result = '';
-        let current;
-        for (current = this.top; current !== this.language; current = current.parent) {
+
+        for (let current = this.top; current !== this.language; current = current.parent) {
             if (current.className) {
                 this.result = this.buildSpan(current.className, '', true) + this.result;
             }
         }
+
         this.mode_buffer = '';
         this.relevance = 0;
         try {
@@ -48,11 +48,11 @@ export class HighlightEngine {
                 match = (this.top.terminators.exec as any)(value);
                 if (!match)
                     break;
-                count = this.processLexeme(value.substring(index, match.index), match[0]);
+                count = this.processLexeme(value.substring(index, match.index), ignore_illegals, match[0]);
                 index = match.index + count;
             }
-            this.processLexeme(value.substr(index));
-            for (current = this.top; current.parent; current = current.parent) { // close dangling modes
+            this.processLexeme(value.substr(index), ignore_illegals);
+            for (let current = this.top; current.parent; current = current.parent) {
                 if (current.className) {
                     console.log('ClassName', current.className);
                 }
@@ -75,8 +75,8 @@ export class HighlightEngine {
         }
     }
 
-    private isIllegal(lexeme, mode) {
-        return !this.ignore_illegals && this.testRe(mode.illegalRe, lexeme);
+    private isIllegal(lexeme, mode, ignore_illegals) {
+        return !ignore_illegals && this.testRe(mode.illegalRe, lexeme);
     }
 
     private keywordMatch(mode, match) {
@@ -94,28 +94,28 @@ export class HighlightEngine {
 
         result = '';
         last_index = 0;
-        (top as any).lexemesRe.lastIndex = 0;
-        match = (top as any).lexemesRe.exec(this.mode_buffer);
+        (this.top as any).lexemesRe.lastIndex = 0;
+        match = (this.top as any).lexemesRe.exec(this.mode_buffer);
 
         while (match) {
-            result += escape(this.mode_buffer.substring(last_index, match.index));
-            keyword_match = this.keywordMatch(top, match);
+            result += this.mode_buffer.substring(last_index, match.index);
+            keyword_match = this.keywordMatch(this.top, match);
             if (keyword_match) {
                 this.relevance += keyword_match[1];
-                result += this.buildSpan(keyword_match[0], escape(match[0]));
+                result += this.buildSpan(keyword_match[0], match[0]);
             } else {
-                result += escape(match[0]);
+                result += match[0];
             }
-            last_index = (top as any).lexemesRe.lastIndex;
-            match = (top as any).lexemesRe.exec(this.mode_buffer);
+            last_index = (this.top as any).lexemesRe.lastIndex;
+            match = (this.top as any).lexemesRe.exec(this.mode_buffer);
         }
-        return result + escape(this.mode_buffer.substr(last_index));
+        return result + this.mode_buffer.substr(last_index);
     }
 
     private processSubLanguage() {
         const explicit = typeof (this.top as any).subLanguage === 'string';
         if (explicit && !this.languages[(this.top as any).subLanguage]) {
-            return escape(this.mode_buffer);
+            return this.mode_buffer;
         }
 
         const result = this.highlight(
@@ -150,7 +150,7 @@ export class HighlightEngine {
         this.top = Object.create(mode, {parent: {value: this.top}});
     }
 
-    private processLexeme(buffer, lexeme ?: any) {
+    private processLexeme(buffer, ignore_illegals, lexeme ?: any) {
 
         this.mode_buffer += buffer;
 
@@ -209,7 +209,7 @@ export class HighlightEngine {
             return origin.returnEnd ? 0 : lexeme.length;
         }
 
-        if (this.isIllegal(lexeme, this.top))
+        if (this.isIllegal(lexeme, this.top, ignore_illegals))
             throw new Error('Illegal lexeme "' + lexeme + '" for mode "' + ((this.top as any).className || '<unnamed>') + '"');
 
         /*
@@ -231,7 +231,13 @@ export class HighlightEngine {
         let classPrefix = noPrefix ? '' : this.options.classPrefix,
             openSpan = '<span class="' + classPrefix;
 
+        console.log('New mode', classname);
+
         this.colorFunc = chalk.hex(colorDefinitions[classname].color);
+
+        if (insideSpan) {
+            return this.colorFunc(insideSpan);
+        }
 
         if (!classname) return insideSpan;
         // return openSpan + insideSpan + closeSpan;

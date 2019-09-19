@@ -11,12 +11,10 @@ export function highlight(type: string, code: string): string {
 
 // console.log(highlight('html', someHTML));
 createTheme(THEME.GITHUB);
+ */
 
 import * as highlight from 'highlight.js';
 const someHTML = '<html><div class="test">Test</div></html>';
 console.log(highlight.highlight('xml', someHTML).value);
- */
-import chalk from 'chalk';
-const fn = chalk.hex('#11aedd');
-console.log(fn);
-console.log(fn('Test'));
+const someJavascript = 'const i = 4;while(i>0){console.log("this is cool");i--;}';
+console.log(highlight.highlight('javascript', someJavascript).value);

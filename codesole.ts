@@ -3,6 +3,7 @@ import {xml} from './languages/xml';
 import {colorDefinitions} from './themes/github';
 import chalk from 'chalk';
 import {HighlightEngine} from './highlight-engine';
+import {javascript} from './languages/javascript';
 
 export class Codesole {
 
@@ -28,7 +29,8 @@ export class Codesole {
 
     constructor() {
         this.languageCompiler = new LanguageCompiler();
-        this.registerLanguage('xml', './languages/xml.js');
+        this.registerLanguage('xml', xml);
+        this.registerLanguage('javascript', javascript);
         this.highlightEngine = new HighlightEngine(this.languages);
     }
 
@@ -315,8 +317,8 @@ private restoreLanguageApi(obj) {
         return this.languages[name] || this.languages[this.aliases[name]];
     }
 
-    private registerLanguage(name, language: any) {
-        let lang = this.languages[name] = xml(this);
+    private registerLanguage(name, languageBuilder: (any) => any) {
+        let lang = this.languages[name] = languageBuilder(this);
         this.restoreLanguageApi(lang);
         if (lang.aliases) {
             lang.aliases.forEach((alias) => {
