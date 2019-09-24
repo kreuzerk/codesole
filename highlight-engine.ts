@@ -19,16 +19,14 @@ export class HighlightEngine {
     };
     private readonly languages = {};
     private aliases = {};
-    private API_REPLACES;
     private colorFunc;
 
-    constructor(languages) {
+    constructor(language) {
         this.languageCompiler = new LanguageCompiler();
-        this.languages = languages;
+        this.language = language;
     }
 
-    public highlight(name, value, languageDefiniton, ignore_illegals ?: any, continuation ?: any) {
-        this.language = languageDefiniton;
+    public highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
         this.top = continuation || this.language;
         this.continuations = {}; // keep continuations for sub-languages
         this.result = '';

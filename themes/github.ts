@@ -19,5 +19,8 @@ export const colorDefinitions = {
   },
   built_in: {
     color: "#ff6879"
+  },
+  comment: {
+    color: "#22ff1e"
   }
 };
