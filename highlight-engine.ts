@@ -21,13 +21,13 @@ export class HighlightEngine {
     private aliases = {};
     private colorFunc;
 
-    constructor(language) {
+    constructor(languageDefinition) {
         this.languageCompiler = new LanguageCompiler();
-        this.language = language;
+        this.language = languageDefinition;
     }
 
-    public highlight(name, value, ignore_illegals ?: any, continuation ?: any) {
-        this.top = continuation || this.language;
+    public highlight(name, value) {
+        this.top = this.language;
         this.continuations = {}; // keep continuations for sub-languages
         this.result = '';
 
@@ -46,10 +46,10 @@ export class HighlightEngine {
                 match = (this.top.terminators.exec as any)(value);
                 if (!match)
                     break;
-                count = this.processLexeme(value.substring(index, match.index), ignore_illegals, match[0]);
+                count = this.processLexeme(value.substring(index, match.index), match[0]);
                 index = match.index + count;
             }
-            this.processLexeme(value.substr(index), ignore_illegals);
+            this.processLexeme(value.substr(index));
             for (let current = this.top; current.parent; current = current.parent) {
                 if (current.className) {
                     console.log('ClassName', current.className);
@@ -73,8 +73,8 @@ export class HighlightEngine {
         }
     }
 
-    private isIllegal(lexeme, mode, ignore_illegals) {
-        return !ignore_illegals && this.testRe(mode.illegalRe, lexeme);
+    private isIllegal(lexeme, mode) {
+        return this.testRe(mode.illegalRe, lexeme);
     }
 
     private keywordMatch(mode, match) {
@@ -118,9 +118,7 @@ export class HighlightEngine {
 
         const result = this.highlight(
             (this.top as any).subLanguage,
-            this.mode_buffer,
-            true,
-            this.continuations[(this.top as any).subLanguage]);
+            this.mode_buffer);
 
         // Counting embedded language score towards the host language may be disabled
         // with zeroing the containing mode relevance. Usecase in point is Markdown that
@@ -148,7 +146,7 @@ export class HighlightEngine {
         this.top = Object.create(mode, {parent: {value: this.top}});
     }
 
-    private processLexeme(buffer, ignore_illegals, lexeme ?: any) {
+    private processLexeme(buffer, lexeme ?: any) {
 
         this.mode_buffer += buffer;
 
@@ -207,7 +205,7 @@ export class HighlightEngine {
             return origin.returnEnd ? 0 : lexeme.length;
         }
 
-        if (this.isIllegal(lexeme, this.top, ignore_illegals))
+        if (this.isIllegal(lexeme, this.top))
             throw new Error('Illegal lexeme "' + lexeme + '" for mode "' + ((this.top as any).className || '<unnamed>') + '"');
 
         /*
