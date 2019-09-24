@@ -14,8 +14,8 @@ export class Codesole {
         this.highlightEngine = new HighlightEngine(languageDefinition);
     }
 
-    public highlight(name, value) {
-        return this.highlightEngine.highlight(name, value);
+    public highlight(value) {
+        return this.highlightEngine.highlight(value);
     }
 
 

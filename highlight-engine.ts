@@ -5,72 +5,44 @@ import {LanguageCompiler} from './language-compiler';
 export class HighlightEngine {
 
     private languageCompiler: LanguageCompiler;
-    private top;
-    private mode_buffer = '';
-    private relevance = 0;
-    private continuations = {};
+    private buffer = '';
     private result = '';
-    private language: any;
-    private options = {
-        classPrefix: 'hljs-',
-        tabReplace: null,
-        useBR: false,
-        languages: undefined
-    };
-    private readonly languages = {};
-    private aliases = {};
+    private languageDefinition: any;
     private colorFunc;
 
     constructor(languageDefinition) {
         this.languageCompiler = new LanguageCompiler();
-        this.language = languageDefinition;
+        this.languageDefinition = languageDefinition;
     }
 
-    public highlight(name, value) {
-        this.top = this.language;
-        this.continuations = {}; // keep continuations for sub-languages
+    public highlight(value: string) {
         this.result = '';
-
-        for (let current = this.top; current !== this.language; current = current.parent) {
-            if (current.className) {
-                this.result = this.buildSpan(current.className, '', true) + this.result;
-            }
-        }
-
-        this.mode_buffer = '';
-        this.relevance = 0;
+        this.buffer = '';
         try {
-            let match, count, index = 0;
-            while (true) {
-                this.top.terminators.lastIndex = index;
-                match = (this.top.terminators.exec as any)(value);
-                if (!match)
-                    break;
-                count = this.processLexeme(value.substring(index, match.index), match[0]);
-                index = match.index + count;
-            }
-            this.processLexeme(value.substr(index));
-            for (let current = this.top; current.parent; current = current.parent) {
-                if (current.className) {
-                    console.log('ClassName', current.className);
-                }
-            }
-            return {
-                relevance: this.relevance,
-                value: this.result,
-                language: name,
-                top: this.top
-            };
+            this.processHTML(value);
+            return this.result;
         } catch (e) {
             if (e.message && e.message.indexOf('Illegal') !== -1) {
-                return {
-                    relevance: 0,
-                    value: escape(value)
-                };
-            } else {
-                throw e;
+                return escape(value);
             }
+            throw e;
         }
+    }
+
+    private processHTML(value: string) {
+        let match;
+        let count;
+        let index = 0;
+        while (true) {
+            this.languageDefinition.terminators.lastIndex = index;
+            match = this.languageDefinition.terminators.exec(value);
+            if (!match) {
+                break;
+            }
+            count = this.processLexeme(value.substring(index, match.index), match[0]);
+            index = match.index + count;
+        }
+        this.processLexeme(value.substr(index));
     }
 
     private isIllegal(lexeme, mode) {
@@ -78,165 +50,118 @@ export class HighlightEngine {
     }
 
     private keywordMatch(mode, match) {
-        const match_str = this.language.case_insensitive ? match[0].toLowerCase() : match[0];
+        const match_str = this.languageDefinition.case_insensitive ? match[0].toLowerCase() : match[0];
         return mode.keywords.hasOwnProperty(match_str) && mode.keywords[match_str];
     }
 
     private processKeywords() {
         let keyword_match, last_index, match, result;
 
-        if (!(this.top as any).keywords) {
-            // return escape(mode_buffer);
-            return this.mode_buffer;
+        if (!(this.languageDefinition as any).keywords) {
+            return this.buffer;
         }
 
         result = '';
         last_index = 0;
-        (this.top as any).lexemesRe.lastIndex = 0;
-        match = (this.top as any).lexemesRe.exec(this.mode_buffer);
+        (this.languageDefinition as any).lexemesRe.lastIndex = 0;
+        match = (this.languageDefinition as any).lexemesRe.exec(this.buffer);
 
         while (match) {
-            result += this.mode_buffer.substring(last_index, match.index);
-            keyword_match = this.keywordMatch(this.top, match);
+            result += this.buffer.substring(last_index, match.index);
+            keyword_match = this.keywordMatch(this.languageDefinition, match);
             if (keyword_match) {
-                this.relevance += keyword_match[1];
-                result += this.buildSpan(keyword_match[0], match[0]);
+                result += this.addCodePart(keyword_match[0]);
             } else {
                 result += match[0];
             }
-            last_index = (this.top as any).lexemesRe.lastIndex;
-            match = (this.top as any).lexemesRe.exec(this.mode_buffer);
+            last_index = (this.languageDefinition as any).lexemesRe.lastIndex;
+            match = (this.languageDefinition as any).lexemesRe.exec(this.buffer);
         }
-        return result + this.mode_buffer.substr(last_index);
-    }
-
-    private processSubLanguage() {
-        const explicit = typeof (this.top as any).subLanguage === 'string';
-        if (explicit && !this.languages[(this.top as any).subLanguage]) {
-            return this.mode_buffer;
-        }
-
-        const result = this.highlight(
-            (this.top as any).subLanguage,
-            this.mode_buffer);
-
-        // Counting embedded language score towards the host language may be disabled
-        // with zeroing the containing mode relevance. Usecase in point is Markdown that
-        // allows XML everywhere and makes every XML snippet to have a much larger Markdown
-        // score.
-        if ((this.top as any).relevance > 0) {
-            this.relevance += result.relevance;
-        }
-        if (explicit) {
-            this.continuations[(this.top as any).subLanguage] = result.top;
-        }
-        return this.buildSpan(result.language, result.value, false, true);
+        return result + this.buffer.substr(last_index);
     }
 
     private processBuffer() {
-        console.log('Rendering', ((this.top as any).subLanguage != null ? this.processSubLanguage() : this.processKeywords()));
         if (this.colorFunc) {
-            this.result += this.colorFunc(((this.top as any).subLanguage != null ? this.processSubLanguage() : this.processKeywords()));
+            this.result += this.colorFunc(this.processKeywords());
         }
-        this.mode_buffer = '';
+        this.buffer = '';
     }
 
     private startNewMode(mode, something ?: any) {
-        this.result += mode.className ? this.buildSpan(mode.className, '', true) : '';
-        this.top = Object.create(mode, {parent: {value: this.top}});
+        this.result += mode.className ? this.addCodePart(mode.className) : '';
+        this.languageDefinition = Object.create(mode, {parent: {value: this.languageDefinition}});
     }
 
     private processLexeme(buffer, lexeme ?: any) {
-
-        this.mode_buffer += buffer;
-
+        this.buffer += buffer;
         if (lexeme == null) {
             this.processBuffer();
             return 0;
         }
 
-        const new_mode = this.subMode(lexeme, this.top);
-        if (new_mode) {
-            if (new_mode.skip) {
-                this.mode_buffer += lexeme;
-            } else {
-                if (new_mode.excludeBegin) {
-                    this.mode_buffer += lexeme;
-                }
-                this.processBuffer();
-                if (!new_mode.returnBegin && !new_mode.excludeBegin) {
-                    this.mode_buffer = lexeme;
-                }
-            }
-            this.startNewMode(new_mode, lexeme);
-            return new_mode.returnBegin ? 0 : lexeme.length;
+        const newMode = this.subMode(lexeme);
+        if (newMode) {
+            return this.processNewMode(newMode, lexeme);
         }
 
-        const end_mode = this.endOfMode(this.top, lexeme);
+        const end_mode = this.endOfMode(this.languageDefinition, lexeme);
         if (end_mode) {
-            const origin: any = this.top;
-            if (origin.skip) {
-                this.mode_buffer += lexeme;
-            } else {
-                if (!(origin.returnEnd || origin.excludeEnd)) {
-                    this.mode_buffer += lexeme;
-                }
-                this.processBuffer();
-                if (origin.excludeEnd) {
-                    this.mode_buffer = lexeme;
-                }
-            }
-            do {
-                if ((this.top as any).className) {
-                    this.colorFunc = chalk.hex(colorDefinitions['tag'].color);
-                    console.log('Closing', (this.top as any).className);
-                }
-                if (!(this.top as any).skip && !(this.top as any).subLanguage) {
-                    this.relevance += (this.top as any).relevance;
-                }
-                this.top = this.top.parent;
-            } while (this.top !== end_mode.parent);
-            if (end_mode.starts) {
-                if (end_mode.endSameAsBegin) {
-                    end_mode.starts.endRe = end_mode.endRe;
-                }
-                this.startNewMode(end_mode.starts, '');
-            }
-            return origin.returnEnd ? 0 : lexeme.length;
+            return this.processEndMode(lexeme, end_mode);
         }
 
-        if (this.isIllegal(lexeme, this.top))
-            throw new Error('Illegal lexeme "' + lexeme + '" for mode "' + ((this.top as any).className || '<unnamed>') + '"');
+        if (this.isIllegal(lexeme, this.languageDefinition))
+            throw new Error('Illegal lexeme "' + lexeme + '" for mode "' + ((this.languageDefinition as any).className || '<unnamed>') + '"');
 
-        /*
-        Parser should not reach this point as all types of lexemes should be caught
-        earlier, but if it does due to some bug make sure it advances at least one
-        character forward to prevent infinite looping.
-        */
-        this.mode_buffer += lexeme;
+        this.buffer += lexeme;
         return lexeme.length || 1;
     }
 
-    private getLanguage(name) {
-        name = (name || '').toLowerCase();
-        return this.languages[name] || this.languages[this.aliases[name]];
+    private processEndMode(lexeme: any, end_mode) {
+        const origin: any = this.languageDefinition;
+        if (origin.skip) {
+            this.buffer += lexeme;
+        } else {
+            if (!(origin.returnEnd || origin.excludeEnd)) {
+                this.buffer += lexeme;
+            }
+            this.processBuffer();
+            if (origin.excludeEnd) {
+                this.buffer = lexeme;
+            }
+        }
+        do {
+            if ((this.languageDefinition as any).className) {
+                this.colorFunc = chalk.hex(colorDefinitions['tag'].color);
+            }
+            this.languageDefinition = this.languageDefinition.parent;
+        } while (this.languageDefinition !== end_mode.parent);
+        if (end_mode.starts) {
+            if (end_mode.endSameAsBegin) {
+                end_mode.starts.endRe = end_mode.endRe;
+            }
+            this.startNewMode(end_mode.starts, '');
+        }
+        return origin.returnEnd ? 0 : lexeme.length;
     }
 
-    private buildSpan(classname, insideSpan, leaveOpen ?: any, noPrefix ?: any) {
-
-        let classPrefix = noPrefix ? '' : this.options.classPrefix,
-            openSpan = '<span class="' + classPrefix;
-
-        console.log('New mode', classname);
-
-        this.colorFunc = chalk.hex(colorDefinitions[classname].color);
-
-        if (insideSpan) {
-            return this.colorFunc(insideSpan);
+    private processNewMode(new_mode, lexeme: any) {
+        if (new_mode.skip) {
+            this.buffer += lexeme;
+        } else {
+            if (new_mode.excludeBegin) {
+                this.buffer += lexeme;
+            }
+            this.processBuffer();
+            if (!new_mode.returnBegin && !new_mode.excludeBegin) {
+                this.buffer = lexeme;
+            }
         }
+        this.startNewMode(new_mode, lexeme);
+        return new_mode.returnBegin ? 0 : lexeme.length;
+    }
 
-        if (!classname) return insideSpan;
-        // return openSpan + insideSpan + closeSpan;
+    private addCodePart(classname) {
+        this.colorFunc = chalk.hex(colorDefinitions[classname].color);
         return '';
     }
 
@@ -257,15 +182,13 @@ export class HighlightEngine {
         }
     }
 
-    private subMode(lexeme, mode) {
-        let i, length;
-
-        for (i = 0, length = mode.contains.length; i < length; i++) {
-            if (this.testRe(mode.contains[i].beginRe, lexeme)) {
-                if (mode.contains[i].endSameAsBegin) {
-                    mode.contains[i].endRe = this.escapeRe(mode.contains[i].beginRe.exec(lexeme)[0]);
+    private subMode(lexeme) {
+        for (let i = 0, length = this.languageDefinition.contains.length; i < length; i++) {
+            if (this.testRe(this.languageDefinition.contains[i].beginRe, lexeme)) {
+                if (this.languageDefinition.contains[i].endSameAsBegin) {
+                    this.languageDefinition.contains[i].endRe = this.escapeRe(this.languageDefinition.contains[i].beginRe.exec(lexeme)[0]);
                 }
-                return mode.contains[i];
+                return this.languageDefinition.contains[i];
             }
         }
     }
