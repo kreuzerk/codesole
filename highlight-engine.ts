@@ -1,17 +1,14 @@
 import chalk from 'chalk';
 import {colorDefinitions} from './themes/github';
-import {LanguageCompiler} from './language-compiler';
 
 export class HighlightEngine {
 
-    private languageCompiler: LanguageCompiler;
     private buffer = '';
     private result = '';
     private languageDefinition: any;
     private colorFunc;
 
     constructor(languageDefinition) {
-        this.languageCompiler = new LanguageCompiler();
         this.languageDefinition = languageDefinition;
     }
 

@@ -9,7 +9,7 @@ export class Codesole {
 
     constructor() {
         this.languageCompiler = new LanguageCompiler();
-        const languageDefinition = LanguageCompiler.getLanguageDefinition('xml', xml);
+        const languageDefinition = xml();
         this.languageCompiler.compileLanguage(languageDefinition);
         this.highlightEngine = new HighlightEngine(languageDefinition);
     }
