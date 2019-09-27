@@ -1,3 +1,5 @@
+import {xml} from './languages/xml';
+
 export class LanguageCompiler {
 
     private language;
@@ -10,7 +12,7 @@ export class LanguageCompiler {
 
     public compileLanguage(language) {
         this.language = language;
-        this.compileMode(language);
+        return this.compileMode(language);
     }
 
     public reStr(re) {
@@ -185,4 +187,7 @@ export class LanguageCompiler {
         return mode;
     }
 
+    public static getLanguageDefinition(name, languageBuilder: (any) => any) {
+        return languageBuilder(this);
+    }
 }
