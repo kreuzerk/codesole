@@ -1,4 +1,4 @@
-import {xml} from './languages/xml'
+import {htmlParsingRules} from './languages/xml'
 import {LanguageCompiler} from './language-compiler';
 
 const hljs = {
@@ -253,7 +253,7 @@ function inherit(parent, foo ?: any, bar ?: any) {  // inherit(parent, override_
 }
 
 function registerLanguage(name, language: any) {
-    var lang = languages[name] = xml(hljs);
+    var lang = languages[name] = htmlParsingRules(hljs);
     restoreLanguageApi(lang);
     if (lang.aliases) {
         lang.aliases.forEach(function (alias) {

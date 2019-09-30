@@ -1,4 +1,4 @@
-import {xml} from './languages/xml';
+import {htmlParsingRules} from './languages/xml';
 
 export class LanguageCompiler {
 
